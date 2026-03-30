@@ -57,6 +57,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
                 self.wfile.write(self.api_response_file())
+        else:
+            self.send_response(404)
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"Error message" : "Directory not found or no permission"}).encode())
 
 
 if __name__ == "__main__":
