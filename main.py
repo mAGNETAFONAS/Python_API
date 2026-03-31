@@ -6,6 +6,7 @@ import socketserver
 
 
 cwd = os.getcwd()
+#regex pattern
 pattern = "\w"
 
 
@@ -15,15 +16,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().__init__(request, client_address, server)
 
     @property
-    def api_response_status(self):
+    def api_response_status(self):# API response for successful startup
         return "Server is running.".encode()
 
-    def api_response_list(self):
+    def api_response_list(self):# API response for listing directory content
         list_dict = dict()
         list_dict["Files"] = os.listdir(cwd + self.path)
         return json.dumps(list_dict).encode()
 
-    def api_response_file(self):
+    def api_response_file(self):# API response for listing file content
         if os.path.isfile(cwd + self.path):
             file_dict = dict()
             file_dict["filename"] = self.path.split("/")[2]
@@ -64,7 +65,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps({"Error message" : "Directory not found or no permission"}).encode())
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":# HTTP server startup
     HOST, PORT = "localhost", 8000
     with socketserver.TCPServer((HOST, PORT), Handler) as server:
         print(f"Server started at {PORT}")
