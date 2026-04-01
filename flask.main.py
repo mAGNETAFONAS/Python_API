@@ -2,16 +2,19 @@ from flask import Flask
 from flask import request
 import json
 import os
+import yaml
+
 app = Flask(__name__)
 cwd = os.getcwd()
+config = yaml.safe_load(open(f"{cwd}/config.yml"))
+allowed_directories = config["Permission"]["directories"]
 
 @app.route("/", methods = ["GET"])# API response for successful startup
 def home():
     return json.dumps({"message":"Server is running."})
 
 @app.route("/<dir_name>", methods = ["GET"])# API response for listing directory content
-def files(dir_name):
-    allowed_directories = ["files"]
+def get_dir(dir_name):
     if os.path.isdir(cwd + request.path):
         if dir_name in allowed_directories:
             list_dict = dict()
@@ -23,7 +26,7 @@ def files(dir_name):
         return json.dumps({"Error message": "Directory not found"})
 
 @app.route("/files/<filename>", methods = ["GET"])# API response for listing file content
-def file(filename):
+def get_file(filename):
     if os.path.isfile(cwd + request.path):
         file_dict = dict()
         file_dict["filename"] = filename
