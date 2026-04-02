@@ -1,10 +1,10 @@
-from flask import Flask
+from flask import Flask, render_template
 from http import HTTPStatus
-import json
 import logging
 import os
 import yaml
 from dotenv import load_dotenv
+
 
 app = Flask(__name__)
 cwd = os.getcwd()
@@ -25,7 +25,7 @@ allowed_dir_env = os.getenv("ALLOWED_DIR")
 def home():
     logging.info("User requested: /")
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-    return json.dumps({"message":"Server is running."})
+    return render_template("index.html")
 
 @app.route("/<dir_name>", methods = ["GET"])# API response for listing directory content
 def get_dir(dir_name):
@@ -36,15 +36,15 @@ def get_dir(dir_name):
             list_dict["Files"] = os.listdir(dir_path)
             logging.info("User requested: %s", dir_name)
             logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-            return json.dumps(list_dict)
+            return render_template("index.html", dir_list=list_dict["Files"])
         else:
             logging.info("User requested: %s", dir_name)
             logging.warning("Request unsuccessful, code: %d", HTTPStatus.FORBIDDEN.value)
-            return json.dumps({"Error message": "No permission"}), HTTPStatus.FORBIDDEN.value
+            return render_template("index.html", dir_list="No Permission"), HTTPStatus.FORBIDDEN.value
     else:
         logging.info("User requested: %s", dir_name)
         logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
-        return json.dumps({"Error message": "Directory not found"}), HTTPStatus.NOT_FOUND.value
+        return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
 @app.route("/<dir_name>/<filename>", methods = ["GET"])# API response for listing file content
 def get_file(dir_name, filename):
@@ -61,19 +61,19 @@ def get_file(dir_name, filename):
                 file_dict["content"] = str(content)
                 logging.info("User requested: %s", dir_name)
                 logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-                return json.dumps(file_dict)
+                return render_template("index.html", dir_list=file_dict["content"])
             else:
                 logging.info("User requested: %s", filename)
                 logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
-                return json.dumps({"Error message": "File not found."}), HTTPStatus.NOT_FOUND.value
+                return render_template("index.html", dir_list="File not found"), HTTPStatus.NOT_FOUND.value
         else:
             logging.info("User requested: %s", dir_name)
             logging.warning("Request unsuccessful, code: %d", HTTPStatus.FORBIDDEN.value)
-            return json.dumps({"Error message": "No permission"}), HTTPStatus.FORBIDDEN.value
+            return render_template("index.html", dir_list="No Permission"), HTTPStatus.FORBIDDEN.value
     else:
         logging.info("User requested: %s", dir_name)
         logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
-        return json.dumps({"Error message": "Directory not found"}), HTTPStatus.NOT_FOUND.value
+        return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
 
 if __name__ == "__main__":# Server startup
