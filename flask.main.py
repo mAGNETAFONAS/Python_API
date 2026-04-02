@@ -1,5 +1,4 @@
 from flask import Flask
-import datetime
 from http import HTTPStatus
 import json
 import logging
@@ -9,8 +8,8 @@ from dotenv import load_dotenv
 
 app = Flask(__name__)
 cwd = os.getcwd()
-date = datetime.datetime.now()
 
+# Logger configuration
 logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -35,8 +34,6 @@ def get_dir(dir_name):
         if dir_name in allowed_directories:
             list_dict = dict()
             list_dict["Files"] = os.listdir(dir_path)
-            #print(f"INFO: At {date} user requested {dir_name}")
-            #print(f"INFO: request was successful")
             logging.info("User requested: %s", dir_name)
             logging.info("Request successful, code: %d", HTTPStatus.OK.value)
             return json.dumps(list_dict)
