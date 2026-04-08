@@ -29,25 +29,24 @@ def home():
 
 @app.route("/<dir_name>", methods = ["GET"])# API response for listing directory content
 def get_dir(dir_name):
+    logging.info("User requested: %s", dir_name)
     dir_path = os.path.join(cwd, dir_name)
     if os.path.isdir(dir_path):
         if dir_name in allowed_directories:
             list_dict = dict()
             list_dict["Files"] = os.listdir(dir_path)
-            logging.info("User requested: %s", dir_name)
             logging.info("Request successful, code: %d", HTTPStatus.OK.value)
             return render_template("index.html", dir_list=list_dict["Files"])
         else:
-            logging.info("User requested: %s", dir_name)
             logging.warning("Request unsuccessful, code: %d", HTTPStatus.FORBIDDEN.value)
             return render_template("index.html", dir_list="No Permission"), HTTPStatus.FORBIDDEN.value
     else:
-        logging.info("User requested: %s", dir_name)
         logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
         return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
 @app.route("/<dir_name>/<filename>", methods = ["GET"])# API response for listing file content
 def get_file(dir_name, filename):
+    logging.info("User requested: %s/%s", dir_name, filename)
     file_path = os.path.join(cwd, dir_name, filename)
     dir_path = os.path.join(cwd, dir_name)
     if os.path.isdir(dir_path):
@@ -59,26 +58,20 @@ def get_file(dir_name, filename):
                     content = file.readlines()
                     file.close()
                 file_dict["content"] = str(content)
-                logging.info("User requested: %s", dir_name)
                 logging.info("Request successful, code: %d", HTTPStatus.OK.value)
                 return render_template("index.html", dir_list=file_dict["content"])
             else:
-                logging.info("User requested: %s", filename)
                 logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
                 return render_template("index.html", dir_list="File not found"), HTTPStatus.NOT_FOUND.value
         else:
-            logging.info("User requested: %s", dir_name)
             logging.warning("Request unsuccessful, code: %d", HTTPStatus.FORBIDDEN.value)
             return render_template("index.html", dir_list="No Permission"), HTTPStatus.FORBIDDEN.value
     else:
-        logging.info("User requested: %s", dir_name)
         logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
         return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
 
 if __name__ == "__main__":# Server startup
-    HOST = "0.0.0.0"
-    PORT = 8000
-    app.run(host=HOST, port=PORT, debug=True)
+    app.run(host=config["Network"]["Host"], port=config["Network"]["Port"], debug=config["Server settings"]["Debug"])
 
 

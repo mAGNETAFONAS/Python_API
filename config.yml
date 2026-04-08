@@ -1,2 +1,7 @@
 Permission:
   directories: [files]
+Server settings:
+  Debug: True
+Network:
+  Host: "0.0.0.0"
+  Port: 8000
