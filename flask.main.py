@@ -77,7 +77,7 @@ def get_file(dir_name, filename):
 
 
 if __name__ == "__main__":# Server startup
-    HOST = "localhost"
+    HOST = "0.0.0.0"
     PORT = 8000
     app.run(host=HOST, port=PORT, debug=True)
 
