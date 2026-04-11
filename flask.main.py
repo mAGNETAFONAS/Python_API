@@ -39,7 +39,12 @@ def get_dir(dir_name):
     if os.path.isdir(dir_path):
         if dir_name in allowed_dir_env:
             list_dict = dict()
-            list_dict["Files"] = os.listdir(dir_path)
+            try:
+                list_dict["Files"] = os.listdir(dir_path)
+            except Exception as ex:
+                usr_err_msg = str(ex).split(":")[0]
+                logging.warning(f"Error message: {ex}, code: %d", HTTPStatus.FORBIDDEN.value)
+                return render_template("index.html", dir_list=usr_err_msg), HTTPStatus.FORBIDDEN.value
             logging.info("Request successful, code: %d", HTTPStatus.OK.value)
             return render_template("index.html", dir_list=list_dict["Files"])
         else:
@@ -59,9 +64,15 @@ def get_file(dir_name, filename):
             if os.path.isfile(file_path):
                 file_dict = dict()
                 file_dict["filename"] = filename
-                with open(file_path, "r") as file:
-                    content = file.readlines()
-                    file.close()
+                try:
+                    with open(file_path, "r") as file:
+                        content = file.readlines()
+                        file.close()
+                except Exception as ex:
+                    usr_err_msg = str(ex).split(":")[0]
+                    logging.warning(f"Error message: {ex}, code: %d", HTTPStatus.FORBIDDEN.value)
+                    return render_template("index.html", dir_list=usr_err_msg), HTTPStatus.FORBIDDEN.value
+
                 file_dict["content"] = str(content)
                 logging.info("Request successful, code: %d", HTTPStatus.OK.value)
                 return render_template("index.html", dir_list=file_dict["content"])
