@@ -18,8 +18,13 @@ logger.setLevel(logging.INFO)
 config = yaml.safe_load(open(f"{cwd}/config.yml"))
 allowed_directories = config["Permission"]["directories"]
 
+
 load_dotenv()
-allowed_dir_env = os.getenv("ALLOWED_DIR")
+allowed_dir_env = os.getenv("ALLOWED_DIR", allowed_directories)
+
+#class Configuration:
+
+
 
 @app.route("/", methods = ["GET"])# API response for successful startup
 def home():
@@ -32,7 +37,7 @@ def get_dir(dir_name):
     logging.info("User requested: %s", dir_name)
     dir_path = os.path.join(cwd, dir_name)
     if os.path.isdir(dir_path):
-        if dir_name in allowed_directories:
+        if dir_name in allowed_dir_env:
             list_dict = dict()
             list_dict["Files"] = os.listdir(dir_path)
             logging.info("Request successful, code: %d", HTTPStatus.OK.value)
@@ -50,7 +55,7 @@ def get_file(dir_name, filename):
     file_path = os.path.join(cwd, dir_name, filename)
     dir_path = os.path.join(cwd, dir_name)
     if os.path.isdir(dir_path):
-        if dir_name in allowed_directories:
+        if dir_name in allowed_dir_env:
             if os.path.isfile(file_path):
                 file_dict = dict()
                 file_dict["filename"] = filename
@@ -72,6 +77,9 @@ def get_file(dir_name, filename):
 
 
 if __name__ == "__main__":# Server startup
-    app.run(host=config["Network"]["Host"], port=config["Network"]["Port"], debug=config["Server settings"]["Debug"])
+    Host = os.getenv("NETWORK_HOST", config["Network"]["Host"])
+    Port = os.getenv("NETWORK_PORT", config["Network"]["Port"])
+    Debug = os.getenv("SERVER_DEBUG", config["Server settings"]["Debug"])
+    app.run(host=Host, port=Port, debug=Debug)
 
 
