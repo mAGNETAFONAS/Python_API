@@ -1,7 +1,32 @@
 #!/bin/bash
 
-image_name=$1
-ver=$2
+help() {
+  echo "Usage: $0 [OPTIONS] [IMAGE NAME] [VERSION]"
+  echo "Options:"
+  echo "-h, --help     Display help message"
+}
 
-echo "Image is being built..."
-docker build -t $image_name:$ver .
+
+  if [ $# -gt 0 ]; then
+    case $1 in
+      -h | --help)
+        help
+        exit 0
+        ;;
+      *)
+        if [ $# -eq 2 ]; then
+          echo "Image is being built..."
+          docker build -t "$1:$2" .
+        else :
+          echo "Number of arguments is wrong"
+          help
+        fi
+        ;;
+    esac
+  else :
+    echo "Image name and version not specified"
+    help
+  fi
+
+
+
