@@ -16,7 +16,7 @@ help() {
       *)
         if [ $# -eq 2 ]; then
           echo "Image is being built..."
-          docker build -t "$1:$2" .
+          docker build -f ./Dockerfile -t "$1:$2" .
         else :
           echo "Number of arguments is wrong"
           help
