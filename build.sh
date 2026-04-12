@@ -20,12 +20,14 @@ help() {
         else :
           echo "Number of arguments is wrong"
           help
+          exit 0
         fi
         ;;
     esac
   else :
     echo "Image name and version not specified"
     help
+    exit 0
   fi
 
 

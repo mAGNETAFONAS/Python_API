@@ -1,24 +1,28 @@
 #!/bin/bash
 
-function prompt() {
-
-  echo "Do you want to: "
-  echo "1. See a snapshot of logs"
-  echo "2. Follow logs"
-  echo "3. Exit"
-  read command
+help() {
+  echo "Usage: $0 [OPTIONS]"
+  echo "Options:"
+  echo "-h, --help       Display help message"
+  echo "-f, --follow     Follow log output"
 }
 
-prompt
 
-while [[ $command -ne 3 ]]; do
-  case $command in
-    1)
-      docker compose logs
-      ;;
-    2)
-      docker compose logs -f
-      ;;
-  esac
-  prompt
-done
+  if [ $# -gt 0 ]; then
+    case $1 in
+      -h | --help)
+        help
+        exit 0
+        ;;
+      -f | --follow)
+        docker compose logs -f
+        ;;
+      *)
+        echo "Invalid argument"
+        help
+        exit 0
+        ;;
+    esac
+  else :
+    docker compose logs
+  fi
