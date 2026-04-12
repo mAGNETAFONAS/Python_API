@@ -2,8 +2,8 @@ from flask import Flask, render_template
 from http import HTTPStatus
 import logging
 import os
+from pydantic_settings import BaseSettings, SettingsConfigDict
 import yaml
-from dotenv import load_dotenv
 
 
 app = Flask(__name__)
@@ -16,15 +16,16 @@ logger.setLevel(logging.INFO)
 
 # Using 2 different ways of externalizing settings for learning purposes
 config = yaml.safe_load(open(f"{cwd}/config.yml"))
-allowed_directories = config["Permission"]["directories"]
 
+class Configuration(BaseSettings):
+    allowed_dir: list = config["Permission"]["directories"]
+    network_host:  str = config["Network"]["Host"]
+    network_port:  int = config["Network"]["Port"]
+    server_debug: bool = config["Server settings"]["Debug"]
 
-load_dotenv()
-allowed_dir_env = os.getenv("ALLOWED_DIR", allowed_directories)
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-#class Configuration:
-
-
+config_class = Configuration()
 
 @app.route("/", methods = ["GET"])# API response for successful startup
 def home():
@@ -37,7 +38,7 @@ def get_dir(dir_name):
     logging.info("User requested: %s", dir_name)
     dir_path = os.path.join(cwd, dir_name)
     if os.path.isdir(dir_path):
-        if dir_name in allowed_dir_env:
+        if dir_name in config_class.allowed_dir:
             list_dict = dict()
             try:
                 list_dict["Files"] = os.listdir(dir_path)
@@ -60,7 +61,7 @@ def get_file(dir_name, filename):
     file_path = os.path.join(cwd, dir_name, filename)
     dir_path = os.path.join(cwd, dir_name)
     if os.path.isdir(dir_path):
-        if dir_name in allowed_dir_env:
+        if dir_name in config_class.allowed_dir:
             if os.path.isfile(file_path):
                 file_dict = dict()
                 file_dict["filename"] = filename
@@ -88,9 +89,6 @@ def get_file(dir_name, filename):
 
 
 if __name__ == "__main__":# Server startup
-    Host = os.getenv("NETWORK_HOST", config["Network"]["Host"])
-    Port = os.getenv("NETWORK_PORT", config["Network"]["Port"])
-    Debug = os.getenv("SERVER_DEBUG", config["Server settings"]["Debug"])
-    app.run(host=Host, port=Port, debug=Debug)
+    app.run(host=config_class.network_host, port=config_class.network_port, debug=config_class.server_debug)
 
 
