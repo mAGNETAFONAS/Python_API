@@ -14,7 +14,7 @@ logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Using 2 different ways of externalizing settings for learning purposes
+# Externalizing settings using config file and environment variables
 config = yaml.safe_load(open(f"{cwd}/config.yml"))
 
 class Configuration(BaseSettings):
