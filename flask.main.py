@@ -36,6 +36,7 @@ logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger()
 logger.setLevel(config_class.logger_level.upper())
 
+#Connection to MySQL database
 mydb = mysql.connector.connect(
     host="python_api_db",
     user=config_class.mysql_user,
@@ -111,13 +112,13 @@ def get_file(dir_name, filename):
         return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
 
-@app.route("/db/", methods = ["GET", "POST"])# API response for successful startup
+@app.route("/db/", methods = ["GET", "POST"])# API response for selecting Database service
 def db_home():
     logging.info("User requested: /db/")
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html")
 
-@app.route("/db/create", methods = ["GET", "POST"])# API response for successful startup
+@app.route("/db/create", methods = ["GET", "POST"])# API response for creating a new user in a database
 def db_create():
     logging.info("User requested: /db/create")
     if request.method == "POST":
@@ -135,7 +136,7 @@ def db_create():
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("create.html")
 
-@app.route("/db/list_all", methods = ["GET", "POST"])# API response for successful startup
+@app.route("/db/list_all", methods = ["GET", "POST"])# API response for listing all users in a database
 def db_list_all():
     logging.info("User requested: /db/list_all")
     sql = "SELECT * FROM users"
@@ -145,7 +146,7 @@ def db_list_all():
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", rows=result)
 
-@app.route("/db/list_<id_num>", methods = ["GET", "POST"])# API response for successful startup
+@app.route("/db/list_<id_num>", methods = ["GET", "POST"])# API response for listing a specific user in a database
 def db_list_id(id_num):
     logging.info(f"User requested: /db/list_{id_num}")
     sql = "SELECT * FROM users WHERE id = %s"
@@ -155,7 +156,7 @@ def db_list_id(id_num):
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", rows=result)
 
-@app.route("/db/delete_<id_num>", methods = ["GET", "POST"])# API response for successful startup
+@app.route("/db/delete_<id_num>", methods = ["GET", "POST"])# API response for deleting a specific user in a database
 def db_delete(id_num):
     logging.info(f"User requested: /db/delete_{id_num}")
     sql = "DELETE FROM users WHERE id = %s"
