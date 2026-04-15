@@ -10,10 +10,7 @@ import yaml
 app = Flask(__name__)
 cwd = os.getcwd()
 
-# Logger configuration
-logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s")
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+
 
 # Externalizing settings using config file and environment variables
 config = yaml.safe_load(open(f"{cwd}/config.yml"))
@@ -28,10 +25,16 @@ class Configuration(BaseSettings):
     network_port:  int = config["Network"]["Port"]
     server_debug: bool = config["Server settings"]["Debug"]
 
+    logger_level: str = config["Logger"]["Level"]
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 config_class = Configuration()
 
+# Logger configuration
+logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger()
+logger.setLevel(config_class.logger_level.upper())
 
 mydb = mysql.connector.connect(
     host="python_api_db",
