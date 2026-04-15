@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Database Explorer</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 60px;
+            padding-bottom: 60px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .status {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        /* The Small Box (Input) */
+        .small-box {
+            padding: 15px;
+            width: 350px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 30px;
+            outline: none;
+        }
+
+        /* The Big Box (Result) */
+        .big-box {
+            width: 90%;
+            max-width: 1000px; /* Widened to fit all 7 columns comfortably */
+            min-height: 200px;
+            padding: 25px;
+            background-color: #ffffff;
+            border: 4px solid #333;
+            overflow-x: auto; /* Enables horizontal scroll if table is too wide */
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; /* Ensures table doesn't squish too much */
+        }
+        th {
+            background-color: #333;
+            color: #fff;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            padding: 15px 10px;
+            text-align: left;
+        }
+        td {
+            border-bottom: 1px solid #ddd;
+            padding: 12px 10px;
+            font-size: 0.95rem;
+            word-break: break-word;
+        }
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* The Command List Section */
+        .command-list-container {
+            width: 85%;
+            max-width: 800px;
+            padding: 20px;
+            background-color: #eee;
+            border: 2px dashed #333;
+            border-radius: 5px;
+        }
+        .command-header {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #333;
+            display: inline-block;
+        }
+        .command-items {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+        }
+        .command-items li {
+            font-family: monospace;
+            padding: 5px 0;
+            color: #555;
+        }
+
+        .btn-home {
+            margin-top: 30px;
+            text-decoration: none;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="status">Database Service</div>
+
+    <form id="apiForm">
+        <input type="text"
+               class="small-box"
+               id="apiInput"
+               placeholder="Type API path (e.g., users)..."
+               autocomplete="off">
+    </form>
+
+    <div class="big-box" id="displayArea">
+        <strong>{{ msg }}</strong>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Surname</th>
+                    <th>Password</th>
+                    <th>Address</th>
+                    <th>Telephone</th>
+                    <th>E-mail</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+            {%for row in rows %}
+                <tr>
+                    <td>{{row.0}}</td>
+                    <td>{{row.1}}</td>
+                    <td>{{row.2}}</td>
+                    <td>{{row.3}}</td>
+                    <td>{{row.4}}</td>
+                    <td>{{row.5}}</td>
+                    <td>{{row.6}}</td>
+                    <td>{{row.7}}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="command-list-container">
+        <div class="command-header">Available Commands</div>
+        <ul class="command-items">
+            <li>create - Lets you create a new user</li>
+            <li>list_all - Lists all users</li>
+            <li>list_[ID] - Lists user specified by id</li>
+            <li>delete_[ID] - Deletes user specified by id</li>
+        </ul>
+    </div>
+
+    <a href="/" class="btn-home">← Back to Dashboard</a>
+
+    <script>
+        document.getElementById('apiForm').onsubmit = function(e) {
+            e.preventDefault();
+            const val = document.getElementById('apiInput').value;
+            if(val) {
+                const currentPart2 = "{{ part2 }}";
+                if (currentPart2 && currentPart2 !== "None") {
+                    window.location.href = "/db/" + val + "/" + currentPart2;
+                } else {
+                    window.location.href = "/db/" + val;
+                }
+            } else {
+                window.location.href = "/db/";
+            }
+        };
+    </script>
+
+</body>
+</html>
