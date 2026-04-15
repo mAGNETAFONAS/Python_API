@@ -42,6 +42,13 @@
             word-wrap: break-word;
         }
 
+        .btn-home {
+            margin-top: 30px;
+            text-decoration: none;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
     </style>
 </head>
 <body>
@@ -60,6 +67,8 @@
             <strong>{{ dir_list }}</strong>
     </div>
 
+    <a href="/" class="btn-home">← Back to Dashboard</a>
+
     <script>
         // When you hit Enter in the small box, it changes the URL
         document.getElementById('urlForm').onsubmit = function(e) {
@@ -70,12 +79,12 @@
                 // and just change the first part of the path
                 const currentPart2 = "{{ part2 }}";
                 if (currentPart2) {
-                    window.location.href = "/" + val + "/" + currentPart2;
+                    window.location.href = "/web/" + val + "/" + currentPart2;
                 } else {
-                    window.location.href = "/" + val;
+                    window.location.href = "/web/" + val;
                 }
             } else {
-                window.location.href = "/";
+                window.location.href = "/web/";
             }
         };
     </script>
