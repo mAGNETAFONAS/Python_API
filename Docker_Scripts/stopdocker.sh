@@ -1,7 +1,7 @@
 #!/bin/bash
 
 help() {
-  echo "Usage: $0 [OPTIONS] [CONTAINER NAME]"
+  echo "Usage: $0 [CONTAINER NAME] [OPTIONS]"
   echo "Options:"
   echo "-h, --help       Display help message"
   echo "-rm, --remove     Follow log output"
@@ -26,12 +26,12 @@ help() {
     esac
   else :
     if [ $# -eq 2 ]; then
-      case $1 in
+      case $2 in
         -rm | --remove)
-          docker container ls -a | grep -w "$2" > /dev/null 2>&1
+          docker container ls -a | grep -w "$1" > /dev/null 2>&1
           if [[ $? = 0 ]]; then
-          docker stop "$2"
-          docker rm "$2"
+          docker stop "$1"
+          docker rm "$1"
         else
           echo "ERROR: Container does not exist."
           help

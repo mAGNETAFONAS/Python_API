@@ -6,11 +6,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 import mysql.connector
 import yaml
 
-
 app = Flask(__name__)
 cwd = os.getcwd()
-
-
 
 # Externalizing settings using config file and environment variables
 config = yaml.safe_load(open(f"{cwd}/config.yml"))
@@ -164,8 +161,6 @@ def db_delete(id_num):
     mydb.commit()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", msg="User deleted successfully")
-
-
 
 if __name__ == "__main__":# Server startup
     app.run(host=config_class.network_host, port=config_class.network_port, debug=config_class.server_debug)
