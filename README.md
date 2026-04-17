@@ -12,7 +12,7 @@ pip install -r /path/to/requirements.txt
 Using scripts in the Docker_scripts directory or standalone command, start docker compile file
 
 ```bash
-./Docker_Scripts/start.sh
+./scripts/start.sh
 ```
 Once images are built and containers are running you can connect to the program with
 localhost:8000. 

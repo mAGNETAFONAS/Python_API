@@ -22,6 +22,7 @@ services:
     build:
       context: .
       dockerfile: docker/web/Dockerfile
+    image: python_api_web:${COMPOSE_VERSION}
     depends_on:
        db:
           condition: service_healthy

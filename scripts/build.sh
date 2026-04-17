@@ -1,11 +1,11 @@
 #!/bin/bash
 
 help() {
-  echo "Usage: $0 [OPTIONS] [IMAGE NAME] [VERSION]"
+  echo "Usage: $0 [OPTIONS] [IMAGE NAME]"
   echo "Options:"
   echo "-h, --help     Display help message"
 }
-
+version=$(cat VERSION.md)
 
   if [ $# -gt 0 ]; then
     case $1 in
@@ -14,9 +14,9 @@ help() {
         exit 0
         ;;
       *)
-        if [ $# -eq 2 ]; then
+        if [ $# -eq 1 ]; then
           echo "Image is being built..."
-          docker build -f ./Dockerfile -t "$1:$2" .
+          docker build -f ./docker/web/Dockerfile -t "$1:$version" -t "$1:latest" .
         else :
           echo "Number of arguments is wrong"
           help
