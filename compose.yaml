@@ -47,6 +47,7 @@ services:
     secrets:
       - root_pass
       - user_pass
+      - pepper
 
 volumes:
   db_data:
@@ -61,3 +62,5 @@ secrets:
     file: root_pass.txt
   user_pass:
     file: user_pass.txt
+  pepper:
+    file: pepper.txt

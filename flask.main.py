@@ -4,9 +4,11 @@ import logging
 import os
 import mysql.connector
 import yaml
+import bcrypt
 
 app = Flask(__name__)
 cwd = os.getcwd()
+
 
 # Externalizing settings using config file and environment variables
 config = yaml.safe_load(open(f"{cwd}/config.yml"))
@@ -55,8 +57,15 @@ class DatabaseConnector:
         password = request.form.get("password")
         address = request.form.get("address")
         telephone_num = request.form.get("telephone_num")
+
+        salt = bcrypt.gensalt()
+        with open("/run/secrets/pepper", "r") as file:
+            pepper = file.read().strip()
+        combined = password + pepper
+        hashed = bcrypt.hashpw(combined.encode(), salt)
+
         sql = "INSERT INTO users (name, surname, email, password, address, telephone_num) VALUES (%s,%s,%s,%s,%s,%s)"
-        val = (name, surname, email, password, address, telephone_num)
+        val = (name, surname, email, hashed, address, telephone_num)
         mycursor.execute(sql, val)
         mydb.commit()
 
@@ -154,7 +163,8 @@ def db_home():
 
 @app.route("/db/create", methods = ["GET", "POST"])# API response for creating a new user in a database
 def db_create():
-    db_class.create()
+    if request.method == "POST":
+        db_class.create()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("create.html")
 
