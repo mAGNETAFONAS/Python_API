@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export COMPOSE_VERSION=$(cat VERSION.md)
-image_name=$(cat compose.yaml | grep "image:" | cut -f2 -d: | cut -f2 -d " ")
+image_name=python_api_web
 
 docker compose -f ./compose.yaml up -d --build
 

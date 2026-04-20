@@ -12,19 +12,24 @@ cwd = os.getcwd()
 # Externalizing settings using config file and environment variables
 config = yaml.safe_load(open(f"{cwd}/config.yml"))
 
-class Configuration(BaseSettings):
-    mysql_database: str = config["Database"]["name"]
-    mysql_user: str = config["Database"]["user"]
-    mysql_password: str = config["Database"]["password"]
+def read_secret(env_var):
+    path = os.getenv(env_var)
+    if path and os.path.exists(path):
+        with open(path, "r") as file:
+            return file.read().strip()
+    return None
 
-    allowed_dir: list = config["Permission"]["directories"]
-    network_host:  str = config["Network"]["Host"]
-    network_port:  int = config["Network"]["Port"]
-    server_debug: bool = config["Server settings"]["Debug"]
+class Configuration:
+    mysql_database = os.getenv("MYSQL_DATABASE", config["Database"]["name"])
+    mysql_user = os.getenv("MYSQL_USER", config["Database"]["user"])
+    mysql_password = read_secret("MYSQL_PASSWORD_FILE")
 
-    logger_level: str = config["Logger"]["Level"]
+    allowed_dir = os.getenv("ALLOWED_DIR", config["Permission"]["directories"])
+    network_host = os.getenv("NETWORK_HOST", config["Network"]["Host"])
+    network_port = os.getenv("NETWORK_PORT", config["Network"]["Port"])
+    server_debug = os.getenv("SERVER_DEBUG", config["Server settings"]["Debug"])
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    logger_level = os.getenv("LOGGER_LEVEL", config["Logger"]["Level"])
 
 config_class = Configuration()
 
@@ -119,7 +124,6 @@ def db_home():
 def db_create():
     logging.info("User requested: /db/create")
     if request.method == "POST":
-        print("veik")
         name = request.form.get("name")
         surname = request.form.get("surname")
         email = request.form.get("email")
