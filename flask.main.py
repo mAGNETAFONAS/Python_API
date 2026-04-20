@@ -2,7 +2,6 @@ from flask import Flask, render_template, request
 from http import HTTPStatus
 import logging
 import os
-from pydantic_settings import BaseSettings, SettingsConfigDict
 import mysql.connector
 import yaml
 
@@ -47,6 +46,39 @@ mydb = mysql.connector.connect(
 )
 mycursor = mydb.cursor(buffered=True)
 
+class DatabaseConnector:
+    @staticmethod
+    def create():
+        name = request.form.get("name")
+        surname = request.form.get("surname")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        address = request.form.get("address")
+        telephone_num = request.form.get("telephone_num")
+        sql = "INSERT INTO users (name, surname, email, password, address, telephone_num) VALUES (%s,%s,%s,%s,%s,%s)"
+        val = (name, surname, email, password, address, telephone_num)
+        mycursor.execute(sql, val)
+        mydb.commit()
+
+    @staticmethod
+    def list_all():
+        sql = "SELECT * FROM users"
+        mycursor.execute(sql)
+        mydb.commit()
+
+    @staticmethod
+    def list_id(id_num):
+        sql = "SELECT * FROM users WHERE id = %s"
+        mycursor.execute(sql, (id_num,))
+        mydb.commit()
+
+    @staticmethod
+    def delete_id(id_num):
+        sql = "DELETE FROM users WHERE id = %s"
+        mycursor.execute(sql, (id_num,))
+        mydb.commit()
+
+db_class = DatabaseConnector()
 @app.route("/", methods = ["GET"])# API response for successful startup
 def intro():
     logging.info("User requested: /")
@@ -114,7 +146,7 @@ def get_file(dir_name, filename):
         return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
 
-@app.route("/db/", methods = ["GET", "POST"])# API response for selecting Database service
+@app.route("/db/", methods = ["GET"])# API response for selecting Database service
 def db_home():
     logging.info("User requested: /db/")
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
@@ -122,47 +154,30 @@ def db_home():
 
 @app.route("/db/create", methods = ["GET", "POST"])# API response for creating a new user in a database
 def db_create():
-    logging.info("User requested: /db/create")
-    if request.method == "POST":
-        name = request.form.get("name")
-        surname = request.form.get("surname")
-        email = request.form.get("email")
-        password = request.form.get("password")
-        address = request.form.get("address")
-        telephone_num = request.form.get("telephone_num")
-        sql = "INSERT INTO users (name, surname, email, password, address, telephone_num) VALUES (%s,%s,%s,%s,%s,%s)"
-        val = (name, surname, email, password, address, telephone_num)
-        mycursor.execute(sql, val)
-        mydb.commit()
+    db_class.create()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("create.html")
 
-@app.route("/db/list_all", methods = ["GET", "POST"])# API response for listing all users in a database
+@app.route("/db/list_all", methods = ["GET"])# API response for listing all users in a database
 def db_list_all():
     logging.info("User requested: /db/list_all")
-    sql = "SELECT * FROM users"
-    mycursor.execute(sql)
-    mydb.commit()
+    db_class.list_all()
     result = mycursor.fetchall()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", rows=result)
 
-@app.route("/db/list_<id_num>", methods = ["GET", "POST"])# API response for listing a specific user in a database
+@app.route("/db/list_<id_num>", methods = ["GET"])# API response for listing a specific user in a database
 def db_list_id(id_num):
     logging.info(f"User requested: /db/list_{id_num}")
-    sql = "SELECT * FROM users WHERE id = %s"
-    mycursor.execute(sql, (id_num,))
-    mydb.commit()
+    db_class.list_id(id_num)
     result = mycursor.fetchall()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", rows=result)
 
-@app.route("/db/delete_<id_num>", methods = ["GET", "POST"])# API response for deleting a specific user in a database
+@app.route("/db/delete_<id_num>", methods = ["GET"])# API response for deleting a specific user in a database
 def db_delete(id_num):
     logging.info(f"User requested: /db/delete_{id_num}")
-    sql = "DELETE FROM users WHERE id = %s"
-    mycursor.execute(sql, (id_num,))
-    mydb.commit()
+    db_class.delete_id(id_num)
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", msg="User deleted successfully")
 
