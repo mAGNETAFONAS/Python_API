@@ -2,32 +2,35 @@ from flask import Flask, render_template, request
 from http import HTTPStatus
 import logging
 import os
-from pydantic_settings import BaseSettings, SettingsConfigDict
 import mysql.connector
 import yaml
-
+import bcrypt
 
 app = Flask(__name__)
 cwd = os.getcwd()
 
 
-
 # Externalizing settings using config file and environment variables
 config = yaml.safe_load(open(f"{cwd}/config.yml"))
 
-class Configuration(BaseSettings):
-    mysql_database: str = config["Database"]["name"]
-    mysql_user: str = config["Database"]["user"]
-    mysql_password: str = config["Database"]["password"]
+def read_secret(env_var):
+    path = os.getenv(env_var)
+    if path and os.path.exists(path):
+        with open(path, "r") as file:
+            return file.read().strip()
+    return None
 
-    allowed_dir: list = config["Permission"]["directories"]
-    network_host:  str = config["Network"]["Host"]
-    network_port:  int = config["Network"]["Port"]
-    server_debug: bool = config["Server settings"]["Debug"]
+class Configuration:
+    mysql_database = os.getenv("MYSQL_DATABASE", config["Database"]["name"])
+    mysql_user = os.getenv("MYSQL_USER", config["Database"]["user"])
+    mysql_password = read_secret("MYSQL_PASSWORD_FILE")
 
-    logger_level: str = config["Logger"]["Level"]
+    allowed_dir = os.getenv("ALLOWED_DIR", config["Permission"]["directories"])
+    network_host = os.getenv("NETWORK_HOST", config["Network"]["Host"])
+    network_port = os.getenv("NETWORK_PORT", config["Network"]["Port"])
+    server_debug = os.getenv("SERVER_DEBUG", config["Server settings"]["Debug"])
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    logger_level = os.getenv("LOGGER_LEVEL", config["Logger"]["Level"])
 
 config_class = Configuration()
 
@@ -45,6 +48,46 @@ mydb = mysql.connector.connect(
 )
 mycursor = mydb.cursor(buffered=True)
 
+class DatabaseConnector:
+    @staticmethod
+    def create():
+        name = request.form.get("name")
+        surname = request.form.get("surname")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        address = request.form.get("address")
+        telephone_num = request.form.get("telephone_num")
+
+        salt = bcrypt.gensalt()
+        with open("/run/secrets/pepper", "r") as file:
+            pepper = file.read().strip()
+        combined = password + pepper
+        hashed = bcrypt.hashpw(combined.encode(), salt)
+
+        sql = "INSERT INTO users (name, surname, email, password, address, telephone_num) VALUES (%s,%s,%s,%s,%s,%s)"
+        val = (name, surname, email, hashed, address, telephone_num)
+        mycursor.execute(sql, val)
+        mydb.commit()
+
+    @staticmethod
+    def list_all():
+        sql = "SELECT * FROM users"
+        mycursor.execute(sql)
+        mydb.commit()
+
+    @staticmethod
+    def list_id(id_num):
+        sql = "SELECT * FROM users WHERE id = %s"
+        mycursor.execute(sql, (id_num,))
+        mydb.commit()
+
+    @staticmethod
+    def delete_id(id_num):
+        sql = "DELETE FROM users WHERE id = %s"
+        mycursor.execute(sql, (id_num,))
+        mydb.commit()
+
+db_class = DatabaseConnector()
 @app.route("/", methods = ["GET"])# API response for successful startup
 def intro():
     logging.info("User requested: /")
@@ -112,7 +155,7 @@ def get_file(dir_name, filename):
         return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
 
-@app.route("/db/", methods = ["GET", "POST"])# API response for selecting Database service
+@app.route("/db/", methods = ["GET"])# API response for selecting Database service
 def db_home():
     logging.info("User requested: /db/")
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
@@ -120,52 +163,33 @@ def db_home():
 
 @app.route("/db/create", methods = ["GET", "POST"])# API response for creating a new user in a database
 def db_create():
-    logging.info("User requested: /db/create")
     if request.method == "POST":
-        print("veik")
-        name = request.form.get("name")
-        surname = request.form.get("surname")
-        email = request.form.get("email")
-        password = request.form.get("password")
-        address = request.form.get("address")
-        telephone_num = request.form.get("telephone_num")
-        sql = "INSERT INTO users (name, surname, email, password, address, telephone_num) VALUES (%s,%s,%s,%s,%s,%s)"
-        val = (name, surname, email, password, address, telephone_num)
-        mycursor.execute(sql, val)
-        mydb.commit()
+        db_class.create()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("create.html")
 
-@app.route("/db/list_all", methods = ["GET", "POST"])# API response for listing all users in a database
+@app.route("/db/list_all", methods = ["GET"])# API response for listing all users in a database
 def db_list_all():
     logging.info("User requested: /db/list_all")
-    sql = "SELECT * FROM users"
-    mycursor.execute(sql)
-    mydb.commit()
+    db_class.list_all()
     result = mycursor.fetchall()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", rows=result)
 
-@app.route("/db/list_<id_num>", methods = ["GET", "POST"])# API response for listing a specific user in a database
+@app.route("/db/list_<id_num>", methods = ["GET"])# API response for listing a specific user in a database
 def db_list_id(id_num):
     logging.info(f"User requested: /db/list_{id_num}")
-    sql = "SELECT * FROM users WHERE id = %s"
-    mycursor.execute(sql, (id_num,))
-    mydb.commit()
+    db_class.list_id(id_num)
     result = mycursor.fetchall()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", rows=result)
 
-@app.route("/db/delete_<id_num>", methods = ["GET", "POST"])# API response for deleting a specific user in a database
+@app.route("/db/delete_<id_num>", methods = ["GET"])# API response for deleting a specific user in a database
 def db_delete(id_num):
     logging.info(f"User requested: /db/delete_{id_num}")
-    sql = "DELETE FROM users WHERE id = %s"
-    mycursor.execute(sql, (id_num,))
-    mydb.commit()
+    db_class.delete_id(id_num)
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", msg="User deleted successfully")
-
-
 
 if __name__ == "__main__":# Server startup
     app.run(host=config_class.network_host, port=config_class.network_port, debug=config_class.server_debug)
