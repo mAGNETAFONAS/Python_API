@@ -24,6 +24,7 @@ class Configuration:
     mysql_database = os.getenv("MYSQL_DATABASE", config["Database"]["name"])
     mysql_user = os.getenv("MYSQL_USER", config["Database"]["user"])
     mysql_password = read_secret("MYSQL_PASSWORD_FILE")
+    mysql_host = os.getenv("MYSQL_HOST", config["Database"]["host"])
 
     allowed_dir = os.getenv("ALLOWED_DIR", config["Permission"]["directories"])
     network_host = os.getenv("NETWORK_HOST", config["Network"]["Host"])
@@ -41,7 +42,7 @@ logger.setLevel(config_class.logger_level.upper())
 
 #Connection to MySQL database
 mydb = mysql.connector.connect(
-    host="python_api_db",
+    host=config_class.mysql_host,
     user=config_class.mysql_user,
     password=config_class.mysql_password,
     database=config_class.mysql_database

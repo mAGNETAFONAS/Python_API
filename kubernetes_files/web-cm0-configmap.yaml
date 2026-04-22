@@ -1,0 +1,126 @@
+apiVersion: v1
+data:
+  allergies.sh: |-
+    #!/usr/bin/bash
+
+    read -p "how many natural numbers?" nat
+
+    lst=seq(1 1 $nat)
+    echo $lst
+  armstrong.sh: "#!/usr/bin/bash\n\nread -p \"enter a number: \" num\nsum=0\n\nfor (( i=0; i<${#num}; i++ )); do\n    echo $sum\n    n=${num:$i:1}\n    ((sum+=$(($n**${#num}))))\n    \ndone\n\nif [[ \"$sum\" == \"$num\" ]]; then \n    echo \"number is armstrong\"\nelse\n    echo \"Number is not armstrong\"\nfi"
+  dif_of_squares.sh: |-
+    #!/usr/bin/bash
+
+    read -p "how many natural numbers?" nat
+
+    lst=($(seq 0 1 $nat))
+    echo "${lst[@]}"
+
+    sum1=0
+    for i in "${lst[@]}"; do
+
+        ((sum1+=$i))
+        echo $sum1
+    done
+
+    sum_sqrd=$(($sum1**2))
+    echo $sum_sqrd
+
+    sum2=0
+    for i in "${lst[@]}"; do
+
+        ((sum2+=$i**2))
+        echo $sum2
+    done
+
+    dif=$((sum_sqrd - sum2))
+    echo $dif
+  errors.sh: |
+    #!/usr/bin/bash
+
+    if [[ $# -eq 1 ]]; then
+        echo "Hello, $1"
+    else
+        echo "Invalid argument"
+        exit 1
+    fi
+  grains.sh: |
+    #!/usr/bin/bash
+
+    grain_sum=0
+    square_val=1
+
+    for ((i=1 ; i<=64 ; i++)); do
+        grain_sum+=$(echo "$grain_sum + $square_val" | bc)
+        echo "square $i value is ${square_val#-}"
+        square_val=$(echo "$square_val * 2" | bc)
+    done
+
+    echo "Total grain sum is $grain_sum"
+  hamming.sh: |+
+    #!/usr/bin/bash
+
+    dna1=$1
+    dna2=$2
+
+    if [[ ${#dna1} != ${#dna2} ]]; then
+        echo "sequences not same length"
+        exit 1
+    fi
+    sum=0
+    for ((i=0; i<${#dna1}; i++)); do
+        if [[ "${dna1:$i:1}" == "${dna2:$i:1}" ]]; then
+            echo "${dna1:$i:1} and ${dna2:$i:1}"
+            continue
+        else
+            ((sum+=1))
+        fi
+
+    done
+
+    echo "number of mistakes is : $sum"
+
+  largest_series.sh: "#!/usr/bin/bash\n\nseq=$1\nspan=$2\n\nif [[ ${#seq} < $span ]]; then \n    echo \"Sequence has less number than span\"\n    exit 1\nelif [[ $seq =~ [^0-9]+ ]]; then \n    echo \"sequence must only habe numbers\"\n    exit 1\nelif (( span < 0  )); then \n    echo \"span  ust be positive\"\n    exit 1\nfi\n\nmax=0\nsum=1\nfor ((i=0; i<=${#seq}-span; i++)); do\necho $i\n    sum=1\n    for ((a=$i; a<$span+$i; a++)); do   \n        num=${seq:$a:1}\n        sum=$(( sum * num ))\n        \n    done\n    echo $sum\n    \n    if [[ $sum -gt $max ]]; then\n        max=$sum\n    fi\n    echo $max\n\ndone\n\necho \"largest: $max\""
+  leap.sh: "#!/usr/bin/bash\n\nif [ $(($1%4)) -eq 0 ]; then\n    \n    if [ $(($1%100)) -eq 0 ]; then\n        if [ $(($1%400)) -eq 0 ]; then\n            echo \"Leap year\"\n        else\n            echo \"Not leap year\"\n        fi\n    else\n        echo \"LEap year\"\n    fi\nelse\n        echo \"Not leap year\"\n\nfi"
+  pangram.sh: "#!/usr/bin/bash\n\nread -p \"Typa a pangram: \" pan\n\n\nabc=(a b c d e f g h i j k l m n o p q r s t u v w x y z)\n\nfor i in ${abc[@]}; do\n    if [[ $pan == *\"$i\"* ]]; then\n        echo $i\n        \n    else\n        echo \"Not a pangram\"\n        exit 1\n    fi\ndone\n\necho \"its a pangram\""
+  raindrops.sh: |-
+    #!/usr/bin/bash
+
+    result=""
+
+    if (( $1 % 3 == 0 )); then
+        result+="Pling"
+    fi
+
+    if (( $1 % 5 == 0 )); then
+        result+="Plang"
+    fi
+
+    if (( $1 % 7 == 0 )); then
+        result+="Plong"
+    fi
+
+    if [[ $result == "" ]]; then
+        result+=$1
+    fi
+
+    echo $result
+  reverse.sh: "#!/usr/bin/bash\n \n read -p \"Enter a word: \" fullname\n\necho $fullname | rev"
+  secret_handshake.sh: |-
+    #!/usr/bin/bash
+
+    conv=({0..1}{0..1}{0..1}{0..1}{0..1})
+
+    if [[ $1 -gt 1 && $1 -lt 32 ]]; then
+        bin=${conv[$1]}
+    else
+        echo "number out of range"
+        exit 1
+    fi
+
+    echo ${bin[@]}
+kind: ConfigMap
+metadata:
+  labels:
+    io.kompose.service: web
+  name: web-cm0
