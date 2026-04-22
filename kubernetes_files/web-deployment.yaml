@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.38.0 (a8f5d1cbd)
+  labels:
+    io.kompose.service: web
+  name: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: web
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.38.0 (a8f5d1cbd)
+      labels:
+        io.kompose.service: web
+    spec:
+      containers:
+        - env:
+            - name: MYSQL_DATABASE
+              value: web
+            - name: MYSQL_PASSWORD_FILE
+              value: /run/secrets/user-pass
+            - name: MYSQL_ROOT_PASSWORD_FILE
+              value: /run/secrets/root-pass
+            - name: MYSQL_USER
+              value: simas
+            - name: MYSQL_HOST
+              value: python-api-db
+          image: python-api-web:latest
+          name: web-app
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /run/secrets/root-pass
+              name: root-pass
+              subPath: root-pass
+            - mountPath: /run/secrets/user-pass
+              name: user-pass
+              subPath: user-pass
+            - mountPath: /run/secrets/pepper
+              name: pepper
+              subPath: pepper
+            - mountPath: /app/files/
+              name: web-cm0
+      restartPolicy: Always
+      volumes:
+        - name: root-pass
+          secret:
+            items:
+              - key: root-pass
+                path: root-pass
+            secretName: root-pass
+        - name: user-pass
+          secret:
+            items:
+              - key: user-pass
+                path: user-pass
+            secretName: user-pass
+        - name: pepper
+          secret:
+            items:
+              - key: pepper
+                path: pepper
+            secretName: pepper
+        - configMap:
+            name: web-cm0
+          name: web-cm0

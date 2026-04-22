@@ -2,7 +2,7 @@
 services:
   db:
     image: mysql:9.6.0
-    container_name: python_api_db
+    container_name: python-api-db
     environment:
       - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/root_pass
       - MYSQL_DATABASE=web
@@ -27,7 +27,7 @@ services:
     build:
       context: .
       dockerfile: docker/web/Dockerfile
-    image: python_api_web:${COMPOSE_VERSION}
+    image: python-api-web:${COMPOSE_VERSION}
     depends_on:
        db:
           condition: service_healthy
@@ -38,6 +38,7 @@ services:
       - MYSQL_DATABASE=web
       - MYSQL_USER=simas
       - MYSQL_PASSWORD_FILE=/run/secrets/user_pass
+      - MYSQL_HOST=python-api-db
     volumes:
       - ./files/:/app/files
     ports:
