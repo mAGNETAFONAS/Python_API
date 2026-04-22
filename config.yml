@@ -5,6 +5,7 @@ Server settings:
 Database:
   name: ""
   user: ""
+  host: ""
 Network:
   Host: "0.0.0.0"
   Port: 8000
