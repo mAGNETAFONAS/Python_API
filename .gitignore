@@ -2,7 +2,7 @@
 .idea
 root_pass.txt
 user_pass.txt
-
+pepper.txt
 
 
 # Byte-compiled / optimized / DLL files
