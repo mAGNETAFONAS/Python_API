@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export COMPOSE_VERSION=$(cat VERSION.md)
-image_name=python_api_web
+image_name=python-api-web
 
 docker compose -f ./compose.yaml up -d --build
 docker image rm $image_name:latest
