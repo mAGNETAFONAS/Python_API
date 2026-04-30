@@ -192,6 +192,33 @@ def db_delete(id_num):
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", msg="User deleted successfully")
 
+@app.route("/db/login", methods = ["GET", "POST"])# API response for creating a new user in a database
+def db_login():
+    message = ""
+    if request.method == "POST":
+        name = request.form.get("name")
+        password = request.form.get("password")
+
+        sql = "SELECT password FROM users WHERE id = %s"
+        val = name
+        mycursor.execute(sql, (val, ))
+        mydb.commit()
+        fetch_pswd = ''.join((mycursor.fetchone()))
+
+        logging.info("INFO: %s", fetch_pswd)
+        logging.info("INFO: %s", password)
+
+        with open("/run/secrets/pepper", "r") as file:
+            pepper = file.read().strip()
+        combined = password + pepper
+        if bcrypt.checkpw(combined.encode(), fetch_pswd.encode()):
+            message = "Logged in"
+        else:
+            message = "Wrong password"
+
+    logging.info("Request successful, code: %d", HTTPStatus.OK.value)
+    return render_template("login.html", msg=message)
+
 if __name__ == "__main__":# Server startup
     app.run(host=config_class.network_host, port=config_class.network_port, debug=config_class.server_debug)
 
