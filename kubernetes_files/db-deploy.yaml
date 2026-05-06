@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-api-db
+  labels:
+    app: python-api-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-api-db
+  template:
+    metadata:
+      name: python-api-db
+      labels:
+        app: python-api-db
+    spec:
+      containers:
+        - name: python-api-db
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MYSQL_DATABASE
+              value: web
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: user-pass
+                  name: user-pass
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: root-pass
+                  name: root-pass
+            - name: MYSQL_USER
+              value: simas
+          readinessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - localhost
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: db-data
+            - mountPath: /docker-entrypoint-initdb.d/init.sql
+              name: db-cm1
+              subPath: init.sql
+          ports:
+            - containerPort: 3306
+              protocol: TCP
+      restartPolicy: Always
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: db-pvc
+        - configMap:
+            items:
+              - key: init.sql
+                path: init.sql
+            name: db-cm1
+          name: db-cm1
