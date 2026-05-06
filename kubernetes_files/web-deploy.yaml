@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  labels:
+    app: web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web-app
+        env:
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: user-pass
+                name: user-pass
+          - name: MYSQL_DATABASE
+            value: web
+          - name: MYSQL_USER
+            value: simas
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: root-pass
+                name: root-pass
+          - name: PEPPER
+            valueFrom:
+              secretKeyRef:
+                key: pepper
+                name: pepper
+          - name: MYSQL_HOST
+            value: python-api-db
+        image: python-api-web:latest
+        imagePullPolicy: Never
+        volumeMounts:
+          - mountPath: /app/files
+            name: files
+            readOnly: false
+        ports:
+        - containerPort: 8000
+
+      volumes:
+        - name: root-pass
+          secret:
+            items:
+            - key: root-pass
+              path: root-pass
+            secretName: root-pass
+        - name: user-pass
+          secret:
+            items:
+            - key: user-pass
+              path: user-pass
+            secretName: user-pass
+        - name: files
+          persistentVolumeClaim:
+            claimName: web-pvc
+        - name: pepper
+          secret:
+            items:
+            - key: pepper
+              path: pepper
+            secretName: pepper
