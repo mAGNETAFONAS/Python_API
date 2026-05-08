@@ -3,7 +3,7 @@
 root_pass.txt
 user_pass.txt
 pepper.txt
-
+secrets.yaml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
