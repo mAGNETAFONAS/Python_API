@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "webchart.fullname" . }}
+  labels:
+    {{- include "webchart.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "webchart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "webchart.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      containers:
+        - name: {{ .Values.containerName }}
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mysql-password
+                  name: mysql-secret
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mysql-root-password
+                  name: mysql-secret
+            - name: PEPPER
+              valueFrom:
+                secretKeyRef:
+                  key: pepper
+                  name: pepper
+            - name: MYSQL_DATABASE
+              value: {{ .Values.env.MYSQL_DATABASE }}
+            - name: MYSQL_USER
+              value: {{ .Values.env.MYSQL_USER }}
+            - name: MYSQL_HOST
+              value: {{ .Release.Name }}-mysql
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          volumeMounts:
+            - mountPath: {{ .Values.volumeMounts.mountPath}}
+              name: {{ .Values.volumeMounts.name}}
+              readOnly: {{ .Values.volumeMounts.readOnly}}
+      volumes:
+          - name: root-pass
+            secret:
+              items:
+              - key: mysql-root-password
+                path: mysql-secret
+              secretName: mysql-secret
+          - name: user-pass
+            secret:
+              items:
+              - key: mysql-password
+                path: mysql-secret
+              secretName: mysql-secret
+          - name: files
+            persistentVolumeClaim:
+              claimName: {{ .Values.persistence.name }}
+          - name: pepper
+            secret:
+              items:
+              - key: pepper
+                path: pepper
+              secretName: pepper
