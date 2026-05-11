@@ -16,7 +16,7 @@ image:
 env:
   MYSQL_DATABASE: web
   MYSQL_USER: simas
-  MYSQL_HOST: python-api-db
+  MYSQL_HOST: db-mysql
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
 # This is to override the chart name.
@@ -147,44 +147,65 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 # Additional volumes on the output Deployment definition.
-volumes:
-  - name: root-pass
-    secret:
-      items:
-      - key: root-pass
-        path: root-pass
-      secretName: root-pass
-  - name: user-pass
-    secret:
-      items:
-      - key: user-pass
-        path: user-pass
-      secretName: user-pass
-  - name: files
-    persistentVolumeClaim:
-      claimName: web-pvc
-  - name: pepper
-    secret:
-      items:
-      - key: pepper
-        path: pepper
-      secretName: pepper
+volumes: []
 
 persistence:
+  name: web-pvc
   enabled: true
   size: 1Gi
   storageClass: standard
   accessModes:
     - ReadWriteOnce
 
+#secrets:
+ # userPasswordName: password
+  #rootPasswordName: root-password
+  #pepperName: pepper
+
 # Additional volumeMounts on the output Deployment definition.
 volumeMounts:
-    - mountPath: /app/files
-      name: files
-      readOnly: true
+    mountPath: /app/files
+    name: files
+    readOnly: true
 
 nodeSelector: {}
 
 tolerations: []
 
 affinity: {}
+
+mysql:
+  auth:
+    database: web
+    username: simas
+    existingSecret: mysql-secret
+
+  primary:
+    persistence:
+      enabled: true
+      size: 1Gi
+    startupProbe:
+      initialDelaySeconds: 30
+      failureThreshold: 60
+      periodSeconds: 10
+
+  initdbScriptsConfigMap: ""
+
+  initdbScripts:
+    01-init-createtable.sql: |-
+      USE web;
+  
+      CREATE TABLE IF NOT EXISTS users (
+          id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255),
+          surname VARCHAR(255),
+          password VARCHAR(255),
+          address VARCHAR(255),
+          telephone_num VARCHAR(20),
+          email VARCHAR(255)
+      );
+
+
+  image:
+    repository: bitnamilegacy/mysql
+    tag: 8.4.4-debian-12-r0
