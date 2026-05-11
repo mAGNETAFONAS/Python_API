@@ -23,7 +23,7 @@ def read_secret(env_var):
 class Configuration:
     mysql_database = os.getenv("MYSQL_DATABASE", config["Database"]["name"])
     mysql_user = os.getenv("MYSQL_USER", config["Database"]["user"])
-    mysql_password = read_secret("MYSQL_PASSWORD_FILE")
+    mysql_password = os.getenv("MYSQL_PASSWORD")
     mysql_host = os.getenv("MYSQL_HOST", config["Database"]["host"])
 
     allowed_dir = os.getenv("ALLOWED_DIR", config["Permission"]["directories"])
@@ -32,6 +32,8 @@ class Configuration:
     server_debug = os.getenv("SERVER_DEBUG", config["Server settings"]["Debug"])
 
     logger_level = os.getenv("LOGGER_LEVEL", config["Logger"]["Level"])
+
+    pepper = os.getenv("PEPPER")
 
 config_class = Configuration()
 
@@ -60,9 +62,8 @@ class DatabaseConnector:
         telephone_num = request.form.get("telephone_num")
 
         salt = bcrypt.gensalt()
-        with open("/run/secrets/pepper", "r") as file:
-            pepper = file.read().strip()
-        combined = password + pepper
+
+        combined = password + config_class.pepper
         hashed = bcrypt.hashpw(combined.encode(), salt)
 
         sql = "INSERT INTO users (name, surname, email, password, address, telephone_num) VALUES (%s,%s,%s,%s,%s,%s)"
@@ -191,6 +192,31 @@ def db_delete(id_num):
     db_class.delete_id(id_num)
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", msg="User deleted successfully")
+
+@app.route("/db/login", methods = ["GET", "POST"])# API response for creating a new user in a database
+def db_login():
+    message = ""
+    if request.method == "POST":
+        name = request.form.get("name")
+        password = request.form.get("password")
+
+        sql = "SELECT password FROM users WHERE id = %s"
+        val = name
+        mycursor.execute(sql, (val, ))
+        mydb.commit()
+        fetch_pswd = ''.join((mycursor.fetchone()))
+
+        logging.info("INFO: %s", fetch_pswd)
+        logging.info("INFO: %s", password)
+
+        combined = password + config_class.pepper
+        if bcrypt.checkpw(combined.encode(), fetch_pswd.encode()):
+            message = "Logged in"
+        else:
+            message = "Wrong password"
+
+    logging.info("Request successful, code: %d", HTTPStatus.OK.value)
+    return render_template("login.html", msg=message)
 
 if __name__ == "__main__":# Server startup
     app.run(host=config_class.network_host, port=config_class.network_port, debug=config_class.server_debug)

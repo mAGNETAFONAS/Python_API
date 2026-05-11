@@ -2,8 +2,8 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   labels:
-    app: mysql
-  name: db-pvc
+    app: web
+  name: web-pvc
 spec:
   storageClassName: standard
   accessModes:

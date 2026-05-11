@@ -16,6 +16,4 @@ kind: ConfigMap
 metadata:
   annotations:
     use-subpath: "true"
-  labels:
-    io.kompose.service: db
   name: db-cm1
