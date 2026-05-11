@@ -25,13 +25,13 @@ spec:
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  key: user-pass
-                  name: user-pass
+                  key: mysql-password
+                  name: mysql-secret
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  key: root-pass
-                  name: root-pass
+                  key: mysql-root-password
+                  name: mysql-secret
             - name: PEPPER
               valueFrom:
                 secretKeyRef:
@@ -42,18 +42,36 @@ spec:
             - name: MYSQL_USER
               value: {{ .Values.env.MYSQL_USER }}
             - name: MYSQL_HOST
-              value: {{ .Values.env.MYSQL_HOST }}
+              value: {{ .Release.Name }}-mysql
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          {{- with .Values.volumeMounts }}
           volumeMounts:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-      {{- with .Values.volumes }}
+            - mountPath: {{ .Values.volumeMounts.mountPath}}
+              name: {{ .Values.volumeMounts.name}}
+              readOnly: {{ .Values.volumeMounts.readOnly}}
       volumes:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+          - name: root-pass
+            secret:
+              items:
+              - key: mysql-root-password
+                path: mysql-secret
+              secretName: mysql-secret
+          - name: user-pass
+            secret:
+              items:
+              - key: mysql-password
+                path: mysql-secret
+              secretName: mysql-secret
+          - name: files
+            persistentVolumeClaim:
+              claimName: {{ .Values.persistence.name }}
+          - name: pepper
+            secret:
+              items:
+              - key: pepper
+                path: pepper
+              secretName: pepper
