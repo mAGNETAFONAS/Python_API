@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "webchart.fullname" . }}-config
+data:
+  MYSQL_DATABASE: {{  .Values.env.MYSQL_DATABASE | quote }}
+  MYSQL_USER: {{  .Values.env.MYSQL_USER | quote }}
+  MYSQL_HOST: {{ .Values.env.MYSQL_HOST | default (printf "%s-mysql" .Release.Name) | quote }}
+
+  # App settings
+  SERVER_DEBUG: {{  .Values.env.SERVER_DEBUG | quote }}
+  NETWORK_PORT: {{  .Values.env.NETWORK_PORT| quote }}
+  NETWORK_HOST: {{  .Values.env.NETWORK_HOST | quote }}
+  LOG_LEVEL: {{  .Values.env.LOG_LEVEL | quote }}
+  ALLOWED_DIR: {{  .Values.env.ALLOWED_DIR | quote }}

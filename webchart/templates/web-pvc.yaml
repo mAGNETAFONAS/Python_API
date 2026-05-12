@@ -5,9 +5,9 @@ metadata:
     {{- include "webchart.labels" . | nindent 4 }}
   name: {{ include "webchart.fullname" . }}-pvc
 spec:
-  storageClassName: {{ .Values.persistence.storageClass }}
+  storageClassName: {{ .Values.web.persistence.storageClass }}
   accessModes:
-  {{- toYaml .Values.persistence.accessModes | nindent 4 }}
+  {{- toYaml .Values.web.persistence.accessModes | nindent 4 }}
   resources:
     requests:
-      storage: {{ .Values.persistence.size }}
+      storage: {{ .Values.web.persistence.size }}
