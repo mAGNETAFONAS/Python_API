@@ -21,6 +21,17 @@ spec:
     spec:
       containers:
         - name: {{ .Values.containerName }}
+          startupProbe:
+            {{- toYaml .Values.web.startupProbe | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.web.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.web.readinessProbe | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.web.securityContext | nindent 12}}
+          envFrom:
+            - configMapRef:
+                name: {{ include "webchart.fullname" . }}-config
           env:
             - name: MYSQL_PASSWORD
               valueFrom:
@@ -37,12 +48,6 @@ spec:
                 secretKeyRef:
                   key: pepper
                   name: pepper
-            - name: MYSQL_DATABASE
-              value: {{ .Values.env.MYSQL_DATABASE }}
-            - name: MYSQL_USER
-              value: {{ .Values.env.MYSQL_USER }}
-            - name: MYSQL_HOST
-              value: {{ .Release.Name }}-mysql
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -50,28 +55,10 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           volumeMounts:
-            - mountPath: {{ .Values.volumeMounts.mountPath}}
-              name: {{ .Values.volumeMounts.name}}
-              readOnly: {{ .Values.volumeMounts.readOnly}}
+            - mountPath: {{ .Values.web.persistence.mountPath}}
+              name: files
+              readOnly: true
       volumes:
-          - name: root-pass
-            secret:
-              items:
-              - key: mysql-root-password
-                path: mysql-secret
-              secretName: mysql-secret
-          - name: user-pass
-            secret:
-              items:
-              - key: mysql-password
-                path: mysql-secret
-              secretName: mysql-secret
           - name: files
             persistentVolumeClaim:
-              claimName: {{ .Values.persistence.name }}
-          - name: pepper
-            secret:
-              items:
-              - key: pepper
-                path: pepper
-              secretName: pepper
+              claimName: {{ include "webchart.fullname" . }}-pvc
