@@ -1,196 +1,118 @@
-# Default values for webchart.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
 
-# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
-replicaCount: 3
-
-# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+# *** Web application ***
 image:
   repository: python-api-web
-  # This sets the pull policy for images.
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: latest
+  tag: ""
 
-env:
-  MYSQL_DATABASE: web
-  MYSQL_USER: simas
-  MYSQL_HOST: db-mysql
-# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-imagePullSecrets: []
-# This is to override the chart name.
-nameOverride: web
-fullnameOverride: web
-containerName: web-app
-
-# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Automatically mount a ServiceAccount's API credentials?
-  automount: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
-# This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
-podAnnotations: {}
-# This is for setting Kubernetes Labels to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-podLabels: {}
-
-podSecurityContext: {}
-  # fsGroup: 2000
-
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
-
-# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
-service:
-  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
-  type: NodePort
-  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 8000
-
-# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
-
-# -- Expose the service via gateway-api HTTPRoute
-# Requires Gateway API resources and suitable controller installed within the cluster
-# (see: https://gateway-api.sigs.k8s.io/guides/)
-httpRoute:
-  # HTTPRoute enabled.
-  enabled: false
-  # HTTPRoute annotations.
-  annotations: {}
-  # Which Gateways this Route is attached to.
-  parentRefs:
-  - name: gateway
-    sectionName: http
-    # namespace: default
-  # Hostnames matching HTTP header.
-  hostnames:
-  - chart-example.local
-  # List of rules and filters applied.
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /headers
-  #   filters:
-  #   - type: RequestHeaderModifier
-  #     requestHeaderModifier:
-  #       set:
-  #       - name: My-Overwrite-Header
-  #         value: this-is-the-only-value
-  #       remove:
-  #       - User-Agent
-  # - matches:
-  #   - path:
-  #       type: PathPrefix
-  #       value: /echo
-  #     headers:
-  #     - name: version
-  #       value: v2
-
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-livenessProbe:
-  httpGet:
-    path: /
-    port: http
-readinessProbe:
-  httpGet:
-    path: /
-    port: http
-
-# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+replicaCount: 1
 autoscaling:
   enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
 
-# Additional volumes on the output Deployment definition.
-volumes: []
+nameOverride: web
+containerName: web-app
 
-persistence:
-  name: web-pvc
-  enabled: true
-  size: 1Gi
-  storageClass: standard
-  accessModes:
-    - ReadWriteOnce
+web:
+  # Container resources
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
 
-#secrets:
- # userPasswordName: password
-  #rootPasswordName: root-password
-  #pepperName: pepper
+  # Probes
+  startupProbe:
+    httpGet:
+      path: /web/
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 30
 
-# Additional volumeMounts on the output Deployment definition.
-volumeMounts:
+  livenessProbe:
+    httpGet:
+      path: /db/
+      port: http
+    initialDelaySeconds: 15
+    periodSeconds: 20
+
+  readinessProbe:
+    httpGet:
+      path: /
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+  # Security context
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+
+  # Persistence
+  persistence:
+    name: web-pvc
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
     mountPath: /app/files
-    name: files
-    readOnly: true
 
-nodeSelector: {}
+# *** Service ***
+service:
+  type: NodePort
+  port: 8000
 
-tolerations: []
+# *** Environment Variables ***
+env:
+  # Database connection
+  MYSQL_DATABASE: web
+  MYSQL_USER: simas
+  MYSQL_HOST: ""
 
-affinity: {}
+  # App settings
+  SERVER_DEBUG: "true"
+  NETWORK_PORT: 8000
+  NETWORK_HOST: "0.0.0.0"
+  LOG_LEVEL: "DEBUG"
+  ALLOWED_DIR: "files"
 
+# *** MySQL Dependency ***
 mysql:
+  enabled: true
+
   auth:
     database: web
     username: simas
     existingSecret: mysql-secret
 
+  image:
+    repository: bitnamilegacy/mysql
+    tag: 8.4.4-debian-12-r0
+
   primary:
     persistence:
       enabled: true
       size: 1Gi
+
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "750m"
+        memory: "1Gi"
+
     startupProbe:
       initialDelaySeconds: 30
       failureThreshold: 60
       periodSeconds: 10
 
   initdbScriptsConfigMap: ""
-
   initdbScripts:
     01-init-createtable.sql: |-
       USE web;
@@ -199,13 +121,8 @@ mysql:
           id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
           name VARCHAR(255),
           surname VARCHAR(255),
-          password VARCHAR(255),
+          password VARCHAR(255) NOT NULL,
           address VARCHAR(255),
           telephone_num VARCHAR(20),
-          email VARCHAR(255)
+          email VARCHAR(255) NOT NULL UNIQUE
       );
-
-
-  image:
-    repository: bitnamilegacy/mysql
-    tag: 8.4.4-debian-12-r0
