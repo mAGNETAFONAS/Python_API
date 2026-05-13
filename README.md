@@ -84,9 +84,10 @@ See webchart/values.yaml for all available options.
 - User management endpoints
 
 ## Screenshots
-![Main page](../../Pictures/Screenshot%20from%202026-05-13%2009-42-55.png)
-![Database service](../../Pictures/Screenshot%20from%202026-05-13%2010-18-04.png)
-![files service](../../Pictures/Screenshot%20from%202026-05-13%2010-27-44.png)
+<img width="1201" height="547" alt="Screenshot from 2026-05-13 09-42-55" src="https://github.com/user-attachments/assets/68a00847-04b9-4f39-844a-9eb801afb9f8" />
+<img width="1462" height="711" alt="Screenshot from 2026-05-13 10-18-04" src="https://github.com/user-attachments/assets/9aadbfef-9af1-4d51-be01-cfce50f97cf8" />
+<img width="1021" height="558" alt="Screenshot from 2026-05-13 10-27-44" src="https://github.com/user-attachments/assets/3f6da5fb-344d-4e90-95c6-30e203a0a65c" />
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first
