@@ -57,7 +57,7 @@ spec:
           volumeMounts:
             - mountPath: {{ .Values.web.persistence.mountPath}}
               name: files
-              readOnly: true
+              readOnly: false
       volumes:
           - name: files
             persistentVolumeClaim:
