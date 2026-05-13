@@ -57,7 +57,7 @@ web:
     name: web-pvc
     enabled: true
     size: 1Gi
-    storageClass: ""
+    storageClass: standard
     accessModes:
       - ReadWriteOnce
     mountPath: /app/files
