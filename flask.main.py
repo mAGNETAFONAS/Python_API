@@ -31,7 +31,7 @@ class Configuration:
     network_port = os.getenv("NETWORK_PORT", config["Network"]["Port"])
     server_debug = os.getenv("SERVER_DEBUG", config["Server settings"]["Debug"])
 
-    logger_level = os.getenv("LOGGER_LEVEL", config["Logger"]["Level"])
+    logger_level = os.getenv("LOG_LEVEL", config["Logger"]["Level"])
 
     pepper = os.getenv("PEPPER")
 
@@ -43,17 +43,22 @@ logger = logging.getLogger()
 logger.setLevel(config_class.logger_level.upper())
 
 #Connection to MySQL database
-mydb = mysql.connector.connect(
-    host=config_class.mysql_host,
-    user=config_class.mysql_user,
-    password=config_class.mysql_password,
-    database=config_class.mysql_database
+def get_db_connection():
+
+    return mysql.connector.connect(
+        host=config_class.mysql_host,
+        user=config_class.mysql_user,
+        password=config_class.mysql_password,
+        database=config_class.mysql_database
 )
-mycursor = mydb.cursor(buffered=True)
+
 
 class DatabaseConnector:
     @staticmethod
     def create():
+        conn = get_db_connection()
+        cursor = conn.cursor(buffered=True)
+
         name = request.form.get("name")
         surname = request.form.get("surname")
         email = request.form.get("email")
@@ -68,26 +73,74 @@ class DatabaseConnector:
 
         sql = "INSERT INTO users (name, surname, email, password, address, telephone_num) VALUES (%s,%s,%s,%s,%s,%s)"
         val = (name, surname, email, hashed, address, telephone_num)
-        mycursor.execute(sql, val)
-        mydb.commit()
+        cursor.execute(sql, val)
+        conn.commit()
+
+        cursor.close()
+        conn.close()
 
     @staticmethod
     def list_all():
+        conn = get_db_connection()
+        cursor = conn.cursor(buffered=True)
+
         sql = "SELECT * FROM users"
-        mycursor.execute(sql)
-        mydb.commit()
+        cursor.execute(sql)
+
+        result = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return result
+
 
     @staticmethod
     def list_id(id_num):
+        conn = get_db_connection()
+        cursor = conn.cursor(buffered=True)
+
         sql = "SELECT * FROM users WHERE id = %s"
-        mycursor.execute(sql, (id_num,))
-        mydb.commit()
+        cursor.execute(sql, (id_num,))
+
+        result = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return result
+
 
     @staticmethod
     def delete_id(id_num):
+        conn = get_db_connection()
+        cursor = conn.cursor(buffered=True)
+
         sql = "DELETE FROM users WHERE id = %s"
-        mycursor.execute(sql, (id_num,))
-        mydb.commit()
+        cursor.execute(sql, (id_num,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def login():
+        conn = get_db_connection()
+        cursor = conn.cursor(buffered=True)
+
+        if request.method == "POST":
+            name = request.form.get("name")
+            password = request.form.get("password")
+
+            sql = "SELECT password FROM users WHERE id = %s"
+            val = name
+            cursor.execute(sql, (val,))
+            fetch_pswd = ''.join((cursor.fetchone()))
+
+            combined = password + config_class.pepper
+            if bcrypt.checkpw(combined.encode(), fetch_pswd.encode()):
+                message = "Logged in"
+            else:
+                message = "Wrong password"
+
+            cursor.close()
+            conn.close()
+            return message
 
 db_class = DatabaseConnector()
 @app.route("/", methods = ["GET"])# API response for successful startup
@@ -173,16 +226,14 @@ def db_create():
 @app.route("/db/list_all", methods = ["GET"])# API response for listing all users in a database
 def db_list_all():
     logging.info("User requested: /db/list_all")
-    db_class.list_all()
-    result = mycursor.fetchall()
+    result = db_class.list_all()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", rows=result)
 
 @app.route("/db/list_<id_num>", methods = ["GET"])# API response for listing a specific user in a database
 def db_list_id(id_num):
     logging.info(f"User requested: /db/list_{id_num}")
-    db_class.list_id(id_num)
-    result = mycursor.fetchall()
+    result = db_class.list_id(id_num)
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("db.html", rows=result)
 
@@ -195,26 +246,7 @@ def db_delete(id_num):
 
 @app.route("/db/login", methods = ["GET", "POST"])# API response for creating a new user in a database
 def db_login():
-    message = ""
-    if request.method == "POST":
-        name = request.form.get("name")
-        password = request.form.get("password")
-
-        sql = "SELECT password FROM users WHERE id = %s"
-        val = name
-        mycursor.execute(sql, (val, ))
-        mydb.commit()
-        fetch_pswd = ''.join((mycursor.fetchone()))
-
-        logging.info("INFO: %s", fetch_pswd)
-        logging.info("INFO: %s", password)
-
-        combined = password + config_class.pepper
-        if bcrypt.checkpw(combined.encode(), fetch_pswd.encode()):
-            message = "Logged in"
-        else:
-            message = "Wrong password"
-
+    message = db_class.login()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
     return render_template("login.html", msg=message)
 
