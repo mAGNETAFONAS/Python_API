@@ -23,7 +23,7 @@ def read_secret(env_var):
 class Configuration:
     mysql_database = os.getenv("MYSQL_DATABASE", config["Database"]["name"])
     mysql_user = os.getenv("MYSQL_USER", config["Database"]["user"])
-    mysql_password = read_secret("MYSQL_PASSWORD_FILE")
+    mysql_password = os.getenv("MYSQL_PASSWORD")
     mysql_host = os.getenv("MYSQL_HOST", config["Database"]["host"])
 
     allowed_dir = os.getenv("ALLOWED_DIR", config["Permission"]["directories"])
@@ -32,6 +32,8 @@ class Configuration:
     server_debug = os.getenv("SERVER_DEBUG", config["Server settings"]["Debug"])
 
     logger_level = os.getenv("LOGGER_LEVEL", config["Logger"]["Level"])
+
+    pepper = os.getenv("PEPPER")
 
 config_class = Configuration()
 
@@ -60,9 +62,7 @@ class DatabaseConnector:
         telephone_num = request.form.get("telephone_num")
 
         salt = bcrypt.gensalt()
-        with open("/run/secrets/pepper", "r") as file:
-            pepper = file.read().strip()
-        combined = password + pepper
+        combined = password + config_class.pepper
         hashed = bcrypt.hashpw(combined.encode(), salt)
 
         sql = "INSERT INTO users (name, surname, email, password, address, telephone_num) VALUES (%s,%s,%s,%s,%s,%s)"
