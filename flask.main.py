@@ -196,7 +196,7 @@ def get_dir(dir_name):
             except Exception as ex:
                 usr_err_msg = str(ex).split(":")[0]
                 logging.warning(f"Error message: {ex}, code: %d", HTTPStatus.FORBIDDEN.value)
-                count_requests(request.method, request.path, HTTPStatus.OK.value)
+                count_requests(request.method, request.path, HTTPStatus.FORBIDDEN.value)
                 total_responses_send.inc()
                 return render_template("index.html", dir_list=usr_err_msg), HTTPStatus.FORBIDDEN.value
             logging.info("Request successful, code: %d", HTTPStatus.OK.value)
@@ -205,12 +205,12 @@ def get_dir(dir_name):
             return render_template("index.html", dir_list=list_dict["Files"])
         else:
             logging.warning("Request unsuccessful, code: %d", HTTPStatus.FORBIDDEN.value)
-            count_requests(request.method, request.path, HTTPStatus.OK.value)
+            count_requests(request.method, request.path, HTTPStatus.FORBIDDEN.value)
             total_responses_send.inc()
             return render_template("index.html", dir_list="No Permission"), HTTPStatus.FORBIDDEN.value
     else:
         logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
-        count_requests(request.method, request.path, HTTPStatus.OK.value)
+        count_requests(request.method, request.path, HTTPStatus.FORBIDDEN.value)
         total_responses_send.inc()
         return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
@@ -231,7 +231,7 @@ def get_file(dir_name, filename):
                 except Exception as ex:
                     usr_err_msg = str(ex).split(":")[0]
                     logging.warning(f"Error message: {ex}, code: %d", HTTPStatus.FORBIDDEN.value)
-                    count_requests(request.method, request.path, HTTPStatus.OK.value)
+                    count_requests(request.method, request.path, HTTPStatus.FORBIDDEN.value)
                     total_responses_send.inc()
                     return render_template("index.html", dir_list=usr_err_msg), HTTPStatus.FORBIDDEN.value
 
@@ -242,18 +242,18 @@ def get_file(dir_name, filename):
                 return render_template("index.html", dir_list=file_dict["content"])
             else:
                 logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
-                count_requests(request.method, request.path, HTTPStatus.OK.value)
+                count_requests(request.method, request.path, HTTPStatus.NOT_FOUND.value)
                 total_responses_send.inc()
                 not_found_count.inc()
                 return render_template("index.html", dir_list="File not found"), HTTPStatus.NOT_FOUND.value
         else:
             logging.warning("Request unsuccessful, code: %d", HTTPStatus.FORBIDDEN.value)
-            count_requests(request.method, request.path, HTTPStatus.OK.value)
+            count_requests(request.method, request.path, HTTPStatus.FORBIDDEN.value)
             total_responses_send.inc()
             return render_template("index.html", dir_list="No Permission"), HTTPStatus.FORBIDDEN.value
     else:
         logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
-        count_requests(request.method, request.path, HTTPStatus.OK.value)
+        count_requests(request.method, request.path, HTTPStatus.NOT_FOUND.value)
         total_responses_send.inc()
         return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
