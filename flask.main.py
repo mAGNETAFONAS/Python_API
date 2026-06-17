@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Response
 from http import HTTPStatus
 import logging
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 import os
 import mysql.connector
 import yaml
@@ -8,6 +9,30 @@ import bcrypt
 
 app = Flask(__name__)
 cwd = os.getcwd()
+
+total_requests_received = Counter(
+    "total_requests_received",
+    "Total HTTP requests",
+    ["method", "endpoint", "status"]
+)
+
+total_responses_send = Counter(
+    "total_responses_send",
+    "Total HTTP responses"
+)
+
+not_found_count = Counter(
+    "not_found_count",
+    "File not found counter"
+)
+
+def count_requests(method, endpoint, status_code):
+    total_requests_received.labels(
+        method=method,
+        endpoint=endpoint,
+        status=str(status_code)
+    ).inc()
+
 
 
 # Externalizing settings using config file and environment variables
@@ -147,12 +172,16 @@ db_class = DatabaseConnector()
 def intro():
     logging.info("User requested: /")
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
+    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_responses_send.inc()
     return render_template("intro.html")
 
 @app.route("/web/", methods = ["GET"])# API response for successful startup
 def home():
     logging.info("User requested: /web/")
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
+    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_responses_send.inc()
     return render_template("index.html")
 
 @app.route("/web/<dir_name>", methods = ["GET"])# API response for listing directory content
@@ -167,14 +196,22 @@ def get_dir(dir_name):
             except Exception as ex:
                 usr_err_msg = str(ex).split(":")[0]
                 logging.warning(f"Error message: {ex}, code: %d", HTTPStatus.FORBIDDEN.value)
+                count_requests(request.method, request.path, HTTPStatus.OK.value)
+                total_responses_send.inc()
                 return render_template("index.html", dir_list=usr_err_msg), HTTPStatus.FORBIDDEN.value
             logging.info("Request successful, code: %d", HTTPStatus.OK.value)
+            count_requests(request.method, request.path, HTTPStatus.OK.value)
+            total_responses_send.inc()
             return render_template("index.html", dir_list=list_dict["Files"])
         else:
             logging.warning("Request unsuccessful, code: %d", HTTPStatus.FORBIDDEN.value)
+            count_requests(request.method, request.path, HTTPStatus.OK.value)
+            total_responses_send.inc()
             return render_template("index.html", dir_list="No Permission"), HTTPStatus.FORBIDDEN.value
     else:
         logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
+        count_requests(request.method, request.path, HTTPStatus.OK.value)
+        total_responses_send.inc()
         return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
 @app.route("/web/<dir_name>/<filename>", methods = ["GET"])# API response for listing file content
@@ -194,19 +231,30 @@ def get_file(dir_name, filename):
                 except Exception as ex:
                     usr_err_msg = str(ex).split(":")[0]
                     logging.warning(f"Error message: {ex}, code: %d", HTTPStatus.FORBIDDEN.value)
+                    count_requests(request.method, request.path, HTTPStatus.OK.value)
+                    total_responses_send.inc()
                     return render_template("index.html", dir_list=usr_err_msg), HTTPStatus.FORBIDDEN.value
 
                 file_dict["content"] = str(content)
                 logging.info("Request successful, code: %d", HTTPStatus.OK.value)
+                count_requests(request.method, request.path, HTTPStatus.OK.value)
+                total_responses_send.inc()
                 return render_template("index.html", dir_list=file_dict["content"])
             else:
                 logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
+                count_requests(request.method, request.path, HTTPStatus.OK.value)
+                total_responses_send.inc()
+                not_found_count.inc()
                 return render_template("index.html", dir_list="File not found"), HTTPStatus.NOT_FOUND.value
         else:
             logging.warning("Request unsuccessful, code: %d", HTTPStatus.FORBIDDEN.value)
+            count_requests(request.method, request.path, HTTPStatus.OK.value)
+            total_responses_send.inc()
             return render_template("index.html", dir_list="No Permission"), HTTPStatus.FORBIDDEN.value
     else:
         logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
+        count_requests(request.method, request.path, HTTPStatus.OK.value)
+        total_responses_send.inc()
         return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
 
@@ -214,6 +262,8 @@ def get_file(dir_name, filename):
 def db_home():
     logging.info("User requested: /db/")
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
+    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_responses_send.inc()
     return render_template("db.html")
 
 @app.route("/db/create", methods = ["GET", "POST"])# API response for creating a new user in a database
@@ -221,6 +271,8 @@ def db_create():
     if request.method == "POST":
         db_class.create()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
+    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_responses_send.inc()
     return render_template("create.html")
 
 @app.route("/db/list_all", methods = ["GET"])# API response for listing all users in a database
@@ -228,6 +280,8 @@ def db_list_all():
     logging.info("User requested: /db/list_all")
     result = db_class.list_all()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
+    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_responses_send.inc()
     return render_template("db.html", rows=result)
 
 @app.route("/db/list_<id_num>", methods = ["GET"])# API response for listing a specific user in a database
@@ -235,6 +289,8 @@ def db_list_id(id_num):
     logging.info(f"User requested: /db/list_{id_num}")
     result = db_class.list_id(id_num)
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
+    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_responses_send.inc()
     return render_template("db.html", rows=result)
 
 @app.route("/db/delete_<id_num>", methods = ["GET"])# API response for deleting a specific user in a database
@@ -242,13 +298,21 @@ def db_delete(id_num):
     logging.info(f"User requested: /db/delete_{id_num}")
     db_class.delete_id(id_num)
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
+    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_responses_send.inc()
     return render_template("db.html", msg="User deleted successfully")
 
 @app.route("/db/login", methods = ["GET", "POST"])# API response for creating a new user in a database
 def db_login():
     message = db_class.login()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
+    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_responses_send.inc()
     return render_template("login.html", msg=message)
+
+@app.route("/metrics")
+def metrics():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 if __name__ == "__main__":# Server startup
     app.run(host=config_class.network_host, port=config_class.network_port, debug=config_class.server_debug)
