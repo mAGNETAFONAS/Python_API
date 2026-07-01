@@ -67,6 +67,15 @@ service:
   type: NodePort
   port: 8000
 
+# *** Service Monitor ***
+serviceMonitor:
+  labels:
+    release: prometheus
+  endpoints:
+    port: http
+    interval: 15s
+    path: /metrics
+
 # *** Environment Variables ***
 env:
   # Database connection

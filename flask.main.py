@@ -13,7 +13,6 @@ cwd = os.getcwd()
 total_requests_received = Counter(
     "total_requests_received",
     "Total HTTP requests",
-    ["method", "endpoint", "status"]
 )
 
 total_responses_send = Counter(
@@ -25,14 +24,6 @@ not_found_count = Counter(
     "not_found_count",
     "File not found counter"
 )
-
-def count_requests(method, endpoint, status_code):
-    total_requests_received.labels(
-        method=method,
-        endpoint=endpoint,
-        status=str(status_code)
-    ).inc()
-
 
 
 # Externalizing settings using config file and environment variables
@@ -172,7 +163,7 @@ db_class = DatabaseConnector()
 def intro():
     logging.info("User requested: /")
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_requests_received.inc()
     total_responses_send.inc()
     return render_template("intro.html")
 
@@ -180,7 +171,7 @@ def intro():
 def home():
     logging.info("User requested: /web/")
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_requests_received.inc()
     total_responses_send.inc()
     return render_template("index.html")
 
@@ -196,21 +187,21 @@ def get_dir(dir_name):
             except Exception as ex:
                 usr_err_msg = str(ex).split(":")[0]
                 logging.warning(f"Error message: {ex}, code: %d", HTTPStatus.FORBIDDEN.value)
-                count_requests(request.method, request.path, HTTPStatus.FORBIDDEN.value)
+                total_requests_received.inc()
                 total_responses_send.inc()
                 return render_template("index.html", dir_list=usr_err_msg), HTTPStatus.FORBIDDEN.value
             logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-            count_requests(request.method, request.path, HTTPStatus.OK.value)
+            total_requests_received.inc()
             total_responses_send.inc()
             return render_template("index.html", dir_list=list_dict["Files"])
         else:
             logging.warning("Request unsuccessful, code: %d", HTTPStatus.FORBIDDEN.value)
-            count_requests(request.method, request.path, HTTPStatus.FORBIDDEN.value)
+            total_requests_received.inc()
             total_responses_send.inc()
             return render_template("index.html", dir_list="No Permission"), HTTPStatus.FORBIDDEN.value
     else:
         logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
-        count_requests(request.method, request.path, HTTPStatus.FORBIDDEN.value)
+        total_requests_received.inc()
         total_responses_send.inc()
         return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
@@ -231,29 +222,29 @@ def get_file(dir_name, filename):
                 except Exception as ex:
                     usr_err_msg = str(ex).split(":")[0]
                     logging.warning(f"Error message: {ex}, code: %d", HTTPStatus.FORBIDDEN.value)
-                    count_requests(request.method, request.path, HTTPStatus.FORBIDDEN.value)
+                    total_requests_received.inc()
                     total_responses_send.inc()
                     return render_template("index.html", dir_list=usr_err_msg), HTTPStatus.FORBIDDEN.value
 
                 file_dict["content"] = str(content)
                 logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-                count_requests(request.method, request.path, HTTPStatus.OK.value)
+                total_requests_received.inc()
                 total_responses_send.inc()
                 return render_template("index.html", dir_list=file_dict["content"])
             else:
                 logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
-                count_requests(request.method, request.path, HTTPStatus.NOT_FOUND.value)
+                total_requests_received.inc()
                 total_responses_send.inc()
                 not_found_count.inc()
                 return render_template("index.html", dir_list="File not found"), HTTPStatus.NOT_FOUND.value
         else:
             logging.warning("Request unsuccessful, code: %d", HTTPStatus.FORBIDDEN.value)
-            count_requests(request.method, request.path, HTTPStatus.FORBIDDEN.value)
+            total_requests_received.inc()
             total_responses_send.inc()
             return render_template("index.html", dir_list="No Permission"), HTTPStatus.FORBIDDEN.value
     else:
         logging.warning("Request unsuccessful, code: %d", HTTPStatus.NOT_FOUND.value)
-        count_requests(request.method, request.path, HTTPStatus.NOT_FOUND.value)
+        total_requests_received.inc()
         total_responses_send.inc()
         return render_template("index.html", dir_list="Directory not found"), HTTPStatus.NOT_FOUND.value
 
@@ -262,7 +253,7 @@ def get_file(dir_name, filename):
 def db_home():
     logging.info("User requested: /db/")
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_requests_received.inc()
     total_responses_send.inc()
     return render_template("db.html")
 
@@ -271,7 +262,7 @@ def db_create():
     if request.method == "POST":
         db_class.create()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_requests_received.inc()
     total_responses_send.inc()
     return render_template("create.html")
 
@@ -280,7 +271,7 @@ def db_list_all():
     logging.info("User requested: /db/list_all")
     result = db_class.list_all()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_requests_received.inc()
     total_responses_send.inc()
     return render_template("db.html", rows=result)
 
@@ -289,7 +280,7 @@ def db_list_id(id_num):
     logging.info(f"User requested: /db/list_{id_num}")
     result = db_class.list_id(id_num)
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_requests_received.inc()
     total_responses_send.inc()
     return render_template("db.html", rows=result)
 
@@ -298,7 +289,7 @@ def db_delete(id_num):
     logging.info(f"User requested: /db/delete_{id_num}")
     db_class.delete_id(id_num)
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_requests_received.inc()
     total_responses_send.inc()
     return render_template("db.html", msg="User deleted successfully")
 
@@ -306,7 +297,7 @@ def db_delete(id_num):
 def db_login():
     message = db_class.login()
     logging.info("Request successful, code: %d", HTTPStatus.OK.value)
-    count_requests(request.method, request.path, HTTPStatus.OK.value)
+    total_requests_received.inc()
     total_responses_send.inc()
     return render_template("login.html", msg=message)
 

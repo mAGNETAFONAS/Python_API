@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "webchart.fullname" . }}
+  labels:
+    {{- include "webchart.labels" . | nindent 4 }}
+    release: {{ .Values.serviceMonitor.labels.release }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "webchart.labels" . | nindent 6 }}
+  endpoints:
+    - port: {{ .Values.serviceMonitor.endpoints.port }}
+      interval: {{ .Values.serviceMonitor.endpoints.interval }}
+      path: {{ .Values.serviceMonitor.endpoints.path }}

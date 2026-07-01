@@ -3,6 +3,11 @@ deploymentMode: SingleBinary
 singleBinary:
   replicas: 1
 
+  persistence:
+    enabled: true
+    size: 3Gi
+    storageClass: standard-retain
+
 loki:
   auth_enabled: false
 
@@ -25,9 +30,6 @@ loki:
   limits_config:
     volume_enabled: false
     allow_structured_metadata: false
-
-persistence:
-  enabled: false
 
 minio:
   enabled: false

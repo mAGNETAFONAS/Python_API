@@ -1,0 +1,30 @@
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard-retain
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 3Gi
+
+grafana:
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki.default:3100
+      access: proxy
+
+  persistence:
+    enabled: true
+    type: pvc
+    size: 1Gi
+    storageClassName: standard-retain
+
+  sidecar:
+    dashboards:
+      enabled: true
