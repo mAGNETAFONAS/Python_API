@@ -36,6 +36,6 @@ jobs:
       with:
         file: ./docker/web/Dockerfile  
         push: true
-        tags: ghcr.io/${{ github.repository_owner }}/python-api-web:${{ steps.version.outputs.version }}
+        tags: ghcr.io/magnetafonas/python-api-web:${{ steps.version.outputs.version }}
 
 
