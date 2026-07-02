@@ -5,6 +5,10 @@ user_pass.txt
 pepper.txt
 dbsecrets.yaml
 websecrets.yaml
+prometheus
+data/
+loki-data/
+grafana-data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
