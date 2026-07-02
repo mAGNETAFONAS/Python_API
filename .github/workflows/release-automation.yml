@@ -1,0 +1,36 @@
+name: Release Automation
+
+on:
+  push:
+    branches:
+      - master
+
+  workflow_dispatch: 
+
+permissions: 
+  contents: write
+
+jobs:
+  automate-versioning:
+    runs-on: ubuntu-latest
+    
+    steps:
+    
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(cat VERSION.md)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1.21.0
+        with:
+          generateReleaseNotes: true
+          name: Release v${{ steps.version.outputs.version }}
+          tag: v${{ steps.version.outputs.version }} 
+          
+
+          
